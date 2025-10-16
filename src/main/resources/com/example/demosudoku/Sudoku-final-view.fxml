@@ -11,7 +11,8 @@
             prefHeight="400.0" prefWidth="600.0"
             style="-fx-background-color: #181818;">
     <children>
-        <Label text="¡Felicidades! 🎉"
+        <Label fx:id="resultLabel"
+               text="¡Felicidades! 🎉"
                layoutX="200.0" layoutY="120.0"
                textFill="white">
             <font>

@@ -11,10 +11,14 @@ import java.io.IOException;
 public class SudokuFinalController {
 
     @FXML
-    private Label resultLabel;
+    private Label resultLabel; // Asegúrate de que este nombre coincida con el fx:id en el FXML
 
     public void setResult(String message) {
-        resultLabel.setText(message);
+        if (resultLabel != null) {
+            resultLabel.setText(message);
+        } else {
+            System.err.println("Error: resultLabel es null en SudokuFinalController");
+        }
     }
 
     @FXML
@@ -23,7 +27,6 @@ public class SudokuFinalController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/demosudoku/sudoku-welcome-view.fxml"));
             Parent root = loader.load();
 
-            // Obtener el stage actual
             Stage currentStage = (Stage) resultLabel.getScene().getWindow();
             currentStage.setScene(new Scene(root));
             currentStage.show();

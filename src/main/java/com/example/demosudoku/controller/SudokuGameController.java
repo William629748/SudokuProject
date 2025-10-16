@@ -78,47 +78,92 @@ public class SudokuGameController implements Initializable {
 
     private void startVictoryCheck() {
         Thread victoryThread = new Thread(() -> {
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    Thread.sleep(1000); // Verificar cada segundo
+                    Thread.sleep(2000); // Verificar cada 2 segundos (más eficiente)
 
+                    // Verificar si el juego existe y el tablero está completo
                     if (game != null && game.isBoardComplete()) {
+                        System.out.println("¡Sudoku completado! Mostrando pantalla de victoria...");
+
                         javafx.application.Platform.runLater(() -> {
                             try {
                                 showVictoryScreen();
                             } catch (IOException e) {
                                 e.printStackTrace();
+                                System.err.println("Error al mostrar pantalla de victoria: " + e.getMessage());
                             }
                         });
+
+                        // Salir del bucle después de detectar victoria
                         break;
                     }
                 } catch (InterruptedException e) {
+                    System.out.println("Hilo de verificación interrumpido");
                     break;
+                } catch (Exception e) {
+                    System.err.println("Error en el hilo de verificación: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         });
+
         victoryThread.setDaemon(true);
+        victoryThread.setName("Victory-Check-Thread");
         victoryThread.start();
+
+        // Guardar referencia para poder detenerlo si es necesario
+        this.victoryThread = victoryThread;
     }
 
+    // Variable de instancia para el hilo
+    private Thread victoryThread;
+
+    // Método para mostrar la pantalla de victoria
     private void showVictoryScreen() throws IOException {
         try {
+            // Detener el hilo de verificación
+            if (victoryThread != null && victoryThread.isAlive()) {
+                victoryThread.interrupt();
+            }
+
+            // Cargar la pantalla final
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/demosudoku/sudoku-final-view.fxml"));
             Parent root = loader.load();
 
+            // Configurar el mensaje de victoria
             SudokuFinalController finalController = loader.getController();
-            if (user != null) {
-                finalController.setResult("¡Felicidades " + user.getNickname() + "! Has completado el Sudoku correctamente.");
-            } else {
-                finalController.setResult("¡Felicidades! Has completado el Sudoku correctamente.");
+
+            // Verificar que el controlador se cargó correctamente
+            if (finalController == null) {
+                throw new IOException("No se pudo cargar el controlador de la pantalla final");
             }
 
+            String victoryMessage;
+            if (user != null) {
+                victoryMessage = "¡Felicidades " + user.getNickname() + "! Has completado el Sudoku correctamente.";
+            } else {
+                victoryMessage = "¡Felicidades! Has completado el Sudoku correctamente.";
+            }
+
+            finalController.setResult(victoryMessage);
+
+            // Cambiar a la pantalla final
             Stage currentStage = (Stage) boardGridPane.getScene().getWindow();
-            currentStage.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            currentStage.setScene(scene);
             currentStage.show();
+
         } catch (IOException e) {
             e.printStackTrace();
             new AlertBox().showAlert("Error", "No se pudo cargar la pantalla de victoria: " + e.getMessage(), Alert.AlertType.ERROR);
+
+            // Fallback: mostrar mensaje de victoria en una alerta
+            String victoryMessage = user != null ?
+                    "¡Felicidades " + user.getNickname() + "! Has completado el Sudoku correctamente." :
+                    "¡Felicidades! Has completado el Sudoku correctamente.";
+
+            new AlertBox().showAlert("¡Victoria!", victoryMessage, Alert.AlertType.INFORMATION);
         }
     }
 }

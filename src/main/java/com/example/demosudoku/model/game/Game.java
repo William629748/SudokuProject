@@ -94,47 +94,80 @@ public class Game extends GameAbstract {
 
     @Override
     public boolean isBoardComplete() {
-        // Primero verificar que no hay celdas vacías
-        for (int row = 0; row < 6; row++) {
-            for (int col = 0; col < 6; col++) {
-                if (board.getBoard().get(row).get(col) == 0) {
-                    return false;
+        try {
+            // Primero verificar que no hay celdas vacías
+            boolean hasEmptyCells = false;
+            for (int row = 0; row < 6; row++) {
+                for (int col = 0; col < 6; col++) {
+                    if (board.getBoard().get(row).get(col) == 0) {
+                        hasEmptyCells = true;
+                        break;
+                    }
                 }
+                if (hasEmptyCells) break;
             }
-        }
 
-        // Luego verificar que el tablero completo es válido
-        return isValidCompleteBoard();
+            if (hasEmptyCells) {
+                System.out.println("Tablero incompleto: hay celdas vacías");
+                return false;
+            }
+
+            // Luego verificar que el tablero completo es válido
+            boolean isValid = isValidCompleteBoard();
+            System.out.println("Tablero completo. ¿Es válido? " + isValid);
+            return isValid;
+
+        } catch (Exception e) {
+            System.err.println("Error en isBoardComplete: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // Validar tablero completo
     private boolean isValidCompleteBoard() {
-        for (int row = 0; row < 6; row++) {
-            for (int col = 0; col < 6; col++) {
-                int num = board.getBoard().get(row).get(col);
+        try {
+            for (int row = 0; row < 6; row++) {
+                for (int col = 0; col < 6; col++) {
+                    int num = board.getBoard().get(row).get(col);
 
-                // Validar fila
-                for (int c = 0; c < 6; c++) {
-                    if (c != col && board.getBoard().get(row).get(c) == num) return false;
-                }
-
-                // Validar columna
-                for (int r = 0; r < 6; r++) {
-                    if (r != row && board.getBoard().get(r).get(col) == num) return false;
-                }
-
-                // Validar bloque 2x3
-                int startRow = (row / 2) * 2;
-                int startCol = (col / 3) * 3;
-                for (int r = startRow; r < startRow + 2; r++) {
-                    for (int c = startCol; c < startCol + 3; c++) {
-                        if ((r != row || c != col) && board.getBoard().get(r).get(c) == num)
+                    // Validar fila
+                    for (int c = 0; c < 6; c++) {
+                        if (c != col && board.getBoard().get(row).get(c) == num) {
+                            System.out.println("Error en fila " + row + ": número " + num + " repetido");
                             return false;
+                        }
+                    }
+
+                    // Validar columna
+                    for (int r = 0; r < 6; r++) {
+                        if (r != row && board.getBoard().get(r).get(col) == num) {
+                            System.out.println("Error en columna " + col + ": número " + num + " repetido");
+                            return false;
+                        }
+                    }
+
+                    // Validar bloque 2x3
+                    int startRow = (row / 2) * 2;
+                    int startCol = (col / 3) * 3;
+                    for (int r = startRow; r < startRow + 2; r++) {
+                        for (int c = startCol; c < startCol + 3; c++) {
+                            if ((r != row || c != col) && board.getBoard().get(r).get(c) == num) {
+                                System.out.println("Error en bloque [" + startRow + "," + startCol + "]: número " + num + " repetido");
+                                return false;
+                            }
+                        }
                     }
                 }
             }
+            System.out.println("¡Tablero válido y completo!");
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Error en isValidCompleteBoard: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-        return true;
     }
 
     public SuggestionEngine getSuggestionEngine() {
