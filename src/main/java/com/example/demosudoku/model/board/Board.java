@@ -1,139 +1,130 @@
 package com.example.demosudoku.model.board;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class Board {
-    private final int SIZE = 6;
-    private final int BLOCK_ROWS = 2;
-    private final int BLOCK_COLS = 3;
-    private int[][] grid;
+
+    private static final int SIZE = 6;
+    private static final int BLOCK_ROWS = 2;
+    private static final int BLOCK_COLS = 3;
+    private static final int NUMBERS_PER_BLOCK = 2;
+
+    private final List<List<Integer>> board;
+    private final boolean[][] lockedCells;
+    private final Random random = new Random();
 
     public Board() {
-        grid = new int[SIZE][SIZE];
+        board = new ArrayList<>();
+        lockedCells = new boolean[SIZE][SIZE];
         initializeBoard();
     }
 
-    private void initializeBoard() {
-        clearBoard();
-        fillInitialBlocks();
+    public void initializeBoard() {
+        for (int i = 0; i < SIZE; i++) {
+            List<Integer> row = new ArrayList<>(Collections.nCopies(SIZE, 0));
+            board.add(row);
+            Arrays.fill(lockedCells[i], false);
+        }
+        fillBlocks(0);
     }
 
-    private void clearBoard() {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                grid[i][j] = 0;
+    private boolean fillBlocks(int blockIndex) {
+        if (blockIndex >= (SIZE / BLOCK_ROWS) * (SIZE / BLOCK_COLS)) {
+            return true;
+        }
+
+        int blockRow = (blockIndex / (SIZE / BLOCK_COLS)) * BLOCK_ROWS;
+        int blockCol = (blockIndex % (SIZE / BLOCK_COLS)) * BLOCK_COLS;
+
+        List<int[]> blockCells = new ArrayList<>();
+        for (int i = blockRow; i < blockRow + BLOCK_ROWS; i++) {
+            for (int j = blockCol; j < blockCol + BLOCK_COLS; j++) {
+                blockCells.add(new int[]{i, j});
             }
         }
-    }
 
-    private void fillInitialBlocks() {
-        Random random = new Random();
+        int placed = 0;
+        List<Integer> numbers = new ArrayList<>();
+        for (int i = 1; i <= SIZE; i++) numbers.add(i);
+        Collections.shuffle(numbers, random);
 
-        for (int blockRow = 0; blockRow < BLOCK_ROWS; blockRow++) {
-            for (int blockCol = 0; blockCol < BLOCK_COLS; blockCol++) {
-                Set<Integer> used = new HashSet<>();
-                int numbersAdded = 0;
-
-                while (numbersAdded < 2) {
-                    int num = random.nextInt(6) + 1;
-                    int row = blockRow * BLOCK_ROWS + random.nextInt(BLOCK_ROWS);
-                    int col = blockCol * BLOCK_COLS + random.nextInt(BLOCK_COLS);
-
-                    if (grid[row][col] == 0 && isValid(row, col, num)) {
-                        grid[row][col] = num;
-                        used.add(num);
-                        numbersAdded++;
+        for (int[] cell : blockCells) {
+            for (int num : numbers) {
+                if (isValid(cell[0], cell[1], num)) {
+                    board.get(cell[0]).set(cell[1], num);
+                    lockCell(cell[0], cell[1]);
+                    placed++;
+                    if (placed == NUMBERS_PER_BLOCK) {
+                        if (fillBlocks(blockIndex + 1)) return true;
+                        break;
                     }
                 }
             }
         }
+        return false;
     }
 
-    public boolean isValid(int row, int col, int num) {
+    public boolean isValid(int row, int col, int candidate) {
+        for (int j = 0; j < SIZE; j++) {
+            if (board.get(row).get(j) == candidate) return false;
+        }
         for (int i = 0; i < SIZE; i++) {
-            if (grid[row][i] == num || grid[i][col] == num) {
-                return false;
-            }
+            if (board.get(i).get(col) == candidate) return false;
         }
 
         int blockStartRow = (row / BLOCK_ROWS) * BLOCK_ROWS;
         int blockStartCol = (col / BLOCK_COLS) * BLOCK_COLS;
-
-        for (int i = 0; i < BLOCK_ROWS; i++) {
-            for (int j = 0; j < BLOCK_COLS; j++) {
-                if (grid[blockStartRow + i][blockStartCol + j] == num) {
-                    return false;
-                }
+        for (int i = blockStartRow; i < blockStartRow + BLOCK_ROWS; i++) {
+            for (int j = blockStartCol; j < blockStartCol + BLOCK_COLS; j++) {
+                if (board.get(i).get(j) == candidate) return false;
             }
         }
-
         return true;
     }
 
-    public boolean setCell(int row, int col, int num) {
-        if (num < 1 || num > 6) return false;
-        if (!isValid(row, col, num)) return false;
-        grid[row][col] = num;
-        return true;
+    public void regenerateBoard() {
+        cleanBoard();
+        fillBlocks(0);
     }
 
-    public void clearCell(int row, int col) {
-        grid[row][col] = 0;
+    public void lockCell(int row, int col) {
+        lockedCells[row][col] = true;
     }
 
-    public int getCell(int row, int col) {
-        return grid[row][col];
+    public void unlockCell(int row, int col) {
+        lockedCells[row][col] = false;
     }
 
-    public int[][] getGrid() {
-        return grid;
+    public boolean isCellLocked(int row, int col) {
+        return lockedCells[row][col];
+    }
+
+    public void unlockEmptyCells() {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (board.get(i).get(j) == 0) lockedCells[i][j] = false;
+            }
+        }
+    }
+
+    public void cleanBoard() {
+        for (int i = 0; i < SIZE; i++) {
+            Arrays.fill(lockedCells[i], false);
+            for (int j = 0; j < SIZE; j++) board.get(i).set(j, 0);
+        }
+    }
+
+    public List<List<Integer>> getBoardAsList() {
+        return board;
     }
 
     public int getSuggestion(int row, int col) {
-        if (grid[row][col] != 0) return grid[row][col];
-        for (int num = 1; num <= 6; num++) {
-            if (isValid(row, col, num)) return num;
+        if (board.get(row).get(col) != 0) return 0;
+        List<Integer> possible = new ArrayList<>();
+        for (int n = 1; n <= SIZE; n++) {
+            if (isValid(row, col, n)) possible.add(n);
         }
-        return 0;
-    }
-
-    public boolean isFull() {
-        for (int[] row : grid) {
-            for (int cell : row) {
-                if (cell == 0) return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean isCompleteAndValid() {
-        for (int i = 0; i < SIZE; i++) {
-            Set<Integer> rowSet = new HashSet<>();
-            Set<Integer> colSet = new HashSet<>();
-
-            for (int j = 0; j < SIZE; j++) {
-                int rowVal = grid[i][j];
-                int colVal = grid[j][i];
-
-                if (rowVal == 0 || colVal == 0) return false;
-                if (!rowSet.add(rowVal) || !colSet.add(colVal)) return false;
-            }
-        }
-
-        for (int br = 0; br < BLOCK_ROWS; br++) {
-            for (int bc = 0; bc < BLOCK_COLS; bc++) {
-                Set<Integer> blockSet = new HashSet<>();
-                for (int i = 0; i < BLOCK_ROWS; i++) {
-                    for (int j = 0; j < BLOCK_COLS; j++) {
-                        int val = grid[br * BLOCK_ROWS + i][bc * BLOCK_COLS + j];
-                        if (val == 0 || !blockSet.add(val)) return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        if (possible.isEmpty()) return 0;
+        return possible.get(random.nextInt(possible.size()));
     }
 }
