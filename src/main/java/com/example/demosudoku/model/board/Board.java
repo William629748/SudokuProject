@@ -1,4 +1,4 @@
-package com.example.demosudoku.model.game;
+package com.example.demosudoku.model.board;
 
 import java.util.HashSet;
 import java.util.Random;
