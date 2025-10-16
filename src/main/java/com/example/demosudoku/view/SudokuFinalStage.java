@@ -34,4 +34,7 @@ public class SudokuFinalStage extends Stage {
             instance = null;
         }
     }
+
+    public void setResult(String s) {
+    }
 }

@@ -13,22 +13,20 @@ public class SudokuFinalController {
     @FXML
     private Label resultLabel;
 
-    private Stage stage;
-
-    public void setStage(Stage stage) {
-        this.stage = stage;
-    }
-
     public void setResult(String message) {
         resultLabel.setText(message);
     }
 
     @FXML
-    private void onReturnToMenu() {
+    private void handleMenu() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/demosudoku/view/sudoku-menu-view.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/demosudoku/sudoku-welcome-view.fxml"));
             Parent root = loader.load();
-            stage.setScene(new Scene(root));
+
+            // Obtener el stage actual
+            Stage currentStage = (Stage) resultLabel.getScene().getWindow();
+            currentStage.setScene(new Scene(root));
+            currentStage.show();
         } catch (IOException e) {
             e.printStackTrace();
         }

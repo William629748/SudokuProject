@@ -42,6 +42,8 @@ public class Board {
                 blockCells.add(new int[]{i, j});
             }
         }
+        // Barajar las celdas del bloque
+        Collections.shuffle(blockCells, random);
 
         int placed = 0;
         List<Integer> numbers = new ArrayList<>();
