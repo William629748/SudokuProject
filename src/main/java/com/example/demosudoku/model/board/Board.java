@@ -1,134 +1,139 @@
-package com.example.demosudoku.model.board;
+package com.example.demosudoku.model.game;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
-/**
- * This class generates a 6x6 board divided into 2x3 blocks.
- * In each 2x3 block exactly one cell is assigned a random number (from 1 to 6),
- * and all the other cells are left as 0. Additionally, the placed number is not repeated
- * in any row or column across the entire board.
- * <p>
- * The board is represented as a list of lists (ArrayLists) rather than using arrays,
- * and the board is generated using a backtracking algorithm that works block by block.
- * <p>
- * Java JDK 17.
- */
-public class Board implements IBoard {
-    // Board dimensions and block dimensions.
+public class Board {
     private final int SIZE = 6;
     private final int BLOCK_ROWS = 2;
     private final int BLOCK_COLS = 3;
+    private int[][] grid;
 
-    // Number of block rows and block columns.
-    private final int TOTAL_BLOCK_ROWS = SIZE / BLOCK_ROWS; // 6/2 = 3
-    private final int TOTAL_BLOCK_COLS = SIZE / BLOCK_COLS; // 6/3 = 2
-    private final int TOTAL_BLOCKS = TOTAL_BLOCK_ROWS * TOTAL_BLOCK_COLS; // 3 * 2 = 6
-
-    // The board represented as a List of Lists (each inner list is a row)
-    private final List<List<Integer>> board;
-    private final Random random = new Random();
-
-    /**
-     * Constructor initializes the board with zeros and then fills each block with one number.
-     */
     public Board() {
-        board = new ArrayList<>();
-        // Initialize the board with zeros.
+        grid = new int[SIZE][SIZE];
+        initializeBoard();
+    }
+
+    private void initializeBoard() {
+        clearBoard();
+        fillInitialBlocks();
+    }
+
+    private void clearBoard() {
         for (int i = 0; i < SIZE; i++) {
-            List<Integer> row = new ArrayList<>();
             for (int j = 0; j < SIZE; j++) {
-                row.add(0);
+                grid[i][j] = 0;
             }
-            board.add(row);
-        }
-        // Attempt to fill each block with a valid number.
-        if (!fillBlocks(0)) {
-            System.out.println("Failed to generate the Sudoku board.");
         }
     }
 
-    /**
-     * Recursively fills each 2x3 block with one number.
-     *
-     * @param blockIndex the index of the current block (ranging from 0 to TOTAL_BLOCKS - 1).
-     * @return true if all blocks have been successfully filled; false otherwise.
-     */
-    @Override
-    public boolean fillBlocks(int blockIndex) {
-        // If all blocks have been processed, the board is complete.
-        if (blockIndex == TOTAL_BLOCKS) {
-            return true;
-        }
+    private void fillInitialBlocks() {
+        Random random = new Random();
 
-        // Determine the block's position.
-        int blockRow = blockIndex / TOTAL_BLOCK_COLS;     // Row index of the block.
-        int blockCol = blockIndex % TOTAL_BLOCK_COLS;       // Column index of the block.
-        int startRow = blockRow * BLOCK_ROWS;
-        int startCol = blockCol * BLOCK_COLS;
+        for (int blockRow = 0; blockRow < BLOCK_ROWS; blockRow++) {
+            for (int blockCol = 0; blockCol < BLOCK_COLS; blockCol++) {
+                Set<Integer> used = new HashSet<>();
+                int numbersAdded = 0;
 
-        // Prepare a list of candidate numbers [1, 2, 3, 4, 5, 6] in random order.
-        List<Integer> numbers = new ArrayList<>();
-        for (int i = 1; i <= SIZE; i++) {
-            numbers.add(i);
-        }
-        Collections.shuffle(numbers, random);
+                while (numbersAdded < 2) {
+                    int num = random.nextInt(6) + 1;
+                    int row = blockRow * BLOCK_ROWS + random.nextInt(BLOCK_ROWS);
+                    int col = blockCol * BLOCK_COLS + random.nextInt(BLOCK_COLS);
 
-        // Iterate over every cell in the current 2x3 block.
-        for (int i = startRow; i < startRow + BLOCK_ROWS; i++) {
-            for (int j = startCol; j < startCol + BLOCK_COLS; j++) {
-                // Try each candidate number in the randomized order.
-                for (Integer number : numbers) {
-                    // Check if placing 'number' in cell (i, j) does not violate the row and column constraints.
-                    if (isValid(i, j, number)) {
-                        board.get(i).set(j, number);
-                        // Recursively fill the next block.
-                        if (fillBlocks(blockIndex + 1)) {
-                            return true;
-                        }
-                        // Backtracking: reset the cell if subsequent placement fails.
-                        board.get(i).set(j, 0);
+                    if (grid[row][col] == 0 && isValid(row, col, num)) {
+                        grid[row][col] = num;
+                        used.add(num);
+                        numbersAdded++;
                     }
                 }
             }
         }
-        // If no valid placement was found for this block, return false.
-        return false;
     }
 
-    /**
-     * Checks whether placing a candidate number at cell (row, col) violates the row or column uniqueness.
-     *
-     * @param row       the row index.
-     * @param col       the column index.
-     * @param candidate the number to place (from 1 to 6).
-     * @return true if the candidate can be placed without conflict; false otherwise.
-     */
-    @Override
-    public boolean isValid(int row, int col, int candidate) {
-        // Check the current row for an existing occurrence of the candidate.
-        for (int j = 0; j < SIZE; j++) {
-            if (board.get(row).get(j) == candidate) {
+    public boolean isValid(int row, int col, int num) {
+        for (int i = 0; i < SIZE; i++) {
+            if (grid[row][i] == num || grid[i][col] == num) {
                 return false;
             }
         }
-        // Check the current column for an existing occurrence of the candidate.
-        for (int i = 0; i < SIZE; i++) {
-            if (board.get(i).get(col) == candidate) {
-                return false;
+
+        int blockStartRow = (row / BLOCK_ROWS) * BLOCK_ROWS;
+        int blockStartCol = (col / BLOCK_COLS) * BLOCK_COLS;
+
+        for (int i = 0; i < BLOCK_ROWS; i++) {
+            for (int j = 0; j < BLOCK_COLS; j++) {
+                if (grid[blockStartRow + i][blockStartCol + j] == num) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean setCell(int row, int col, int num) {
+        if (num < 1 || num > 6) return false;
+        if (!isValid(row, col, num)) return false;
+        grid[row][col] = num;
+        return true;
+    }
+
+    public void clearCell(int row, int col) {
+        grid[row][col] = 0;
+    }
+
+    public int getCell(int row, int col) {
+        return grid[row][col];
+    }
+
+    public int[][] getGrid() {
+        return grid;
+    }
+
+    public int getSuggestion(int row, int col) {
+        if (grid[row][col] != 0) return grid[row][col];
+        for (int num = 1; num <= 6; num++) {
+            if (isValid(row, col, num)) return num;
+        }
+        return 0;
+    }
+
+    public boolean isFull() {
+        for (int[] row : grid) {
+            for (int cell : row) {
+                if (cell == 0) return false;
             }
         }
         return true;
     }
 
-    /**
-     * Returns the generated board.
-     *
-     * @return a list of lists representing the board.
-     */
-    public List<List<Integer>> getBoard() {
-        return board;
+    public boolean isCompleteAndValid() {
+        for (int i = 0; i < SIZE; i++) {
+            Set<Integer> rowSet = new HashSet<>();
+            Set<Integer> colSet = new HashSet<>();
+
+            for (int j = 0; j < SIZE; j++) {
+                int rowVal = grid[i][j];
+                int colVal = grid[j][i];
+
+                if (rowVal == 0 || colVal == 0) return false;
+                if (!rowSet.add(rowVal) || !colSet.add(colVal)) return false;
+            }
+        }
+
+        for (int br = 0; br < BLOCK_ROWS; br++) {
+            for (int bc = 0; bc < BLOCK_COLS; bc++) {
+                Set<Integer> blockSet = new HashSet<>();
+                for (int i = 0; i < BLOCK_ROWS; i++) {
+                    for (int j = 0; j < BLOCK_COLS; j++) {
+                        int val = grid[br * BLOCK_ROWS + i][bc * BLOCK_COLS + j];
+                        if (val == 0 || !blockSet.add(val)) return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 }
