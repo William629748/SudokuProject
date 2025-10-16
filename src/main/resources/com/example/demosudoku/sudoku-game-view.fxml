@@ -45,7 +45,6 @@
             <Image url="@Images/Devolver.png" />
          </image>
       </ImageView>
-      <Button fx:id="helpButton" layoutX="394.0" layoutY="555.0" mnemonicParsing="false" onMouseClicked="#handleHelpButton" prefHeight="25.0" prefWidth="86.0" text="Ayuda" />
         <Button onAction="#handleHelpButton" text="Ayuda" />
     </children>
 </AnchorPane>

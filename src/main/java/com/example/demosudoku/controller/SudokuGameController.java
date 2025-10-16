@@ -3,6 +3,7 @@ package com.example.demosudoku.controller;
 import com.example.demosudoku.model.game.Game;
 import com.example.demosudoku.model.user.User;
 import com.example.demosudoku.utils.AlertBox;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -29,17 +30,8 @@ public class SudokuGameController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         game = new Game(boardGridPane);
-
-        // Configurar el callback para la victoria
-        game.setVictoryCallback(() -> {
-            try {
-                showVictoryScreen();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-
         game.startGame();
+        startVictoryCheck();
     }
 
     public void setUser(User user) {
@@ -61,7 +53,9 @@ public class SudokuGameController implements Initializable {
     }
 
     @FXML
-    private void handleHelpButton(MouseEvent event) {
+    private void handleHelpButton(ActionEvent event) {
+        System.out.println("Botón de ayuda presionado");
+
         if (game != null) {
             Game.SuggestionEngine suggestionEngine = game.getSuggestionEngine();
             int[] suggestion = suggestionEngine.getSafeSuggestion();
@@ -82,14 +76,36 @@ public class SudokuGameController implements Initializable {
         }
     }
 
-    // Método para mostrar la pantalla de victoria
+    private void startVictoryCheck() {
+        Thread victoryThread = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(1000); // Verificar cada segundo
+
+                    if (game != null && game.isBoardComplete()) {
+                        javafx.application.Platform.runLater(() -> {
+                            try {
+                                showVictoryScreen();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        break;
+                    }
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        });
+        victoryThread.setDaemon(true);
+        victoryThread.start();
+    }
+
     private void showVictoryScreen() throws IOException {
         try {
-            // Cargar la pantalla final
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/demosudoku/sudoku-final-view.fxml"));
             Parent root = loader.load();
 
-            // Configurar el mensaje de victoria
             SudokuFinalController finalController = loader.getController();
             if (user != null) {
                 finalController.setResult("¡Felicidades " + user.getNickname() + "! Has completado el Sudoku correctamente.");
@@ -97,7 +113,6 @@ public class SudokuGameController implements Initializable {
                 finalController.setResult("¡Felicidades! Has completado el Sudoku correctamente.");
             }
 
-            // Cambiar a la pantalla final
             Stage currentStage = (Stage) boardGridPane.getScene().getWindow();
             currentStage.setScene(new Scene(root));
             currentStage.show();

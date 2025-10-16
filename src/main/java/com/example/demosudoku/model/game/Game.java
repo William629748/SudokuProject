@@ -10,20 +10,8 @@ import java.util.List;
 
 public class Game extends GameAbstract {
 
-    // Interface para el callback de victoria
-    public interface VictoryCallback {
-        void onVictory();
-    }
-
-    private VictoryCallback victoryCallback;
-
     public Game(GridPane boardGridpane) {
         super(boardGridpane);
-    }
-
-    // Método para establecer el callback
-    public void setVictoryCallback(VictoryCallback callback) {
-        this.victoryCallback = callback;
     }
 
     @Override
@@ -71,14 +59,15 @@ public class Game extends GameAbstract {
                     // Actualizar el modelo con el número válido
                     board.getBoard().get(row).set(col, number);
                     txt.setStyle("-fx-text-fill: #27ae60; -fx-border-color: #27ae60; -fx-border-width: 1px;");
-
-                    // Verificar si el tablero está completo y es válido
-                    if (isBoardComplete() && victoryCallback != null) {
-                        victoryCallback.onVictory();
-                    }
                 } else {
                     // Número inválido - mostrar error
                     txt.setStyle("-fx-text-fill: #e74c3c; -fx-border-color: #e74c3c; -fx-border-width: 2px;");
+
+                    // Mostrar alerta de conflicto
+                    javafx.application.Platform.runLater(() -> {
+                        // Puedes agregar aquí una alerta si lo deseas
+                        System.out.println("Número " + number + " no válido en posición [" + row + "," + col + "]");
+                    });
                 }
             } else {
                 // Celda vacía - resetear estilo y modelo
@@ -91,21 +80,38 @@ public class Game extends GameAbstract {
     @Override
     public TextField getTextFieldAt(int row, int col) {
         for (Node node : boardGridpane.getChildren()) {
-            Integer r = GridPane.getRowIndex(node);
-            Integer c = GridPane.getColumnIndex(node);
-            if (r == null) r = 0;
-            if (c == null) c = 0;
-            if (r == row && c == col) return (TextField) node;
+            // SOLO procesar TextField, ignorar otros tipos de nodos
+            if (node instanceof TextField) {
+                Integer r = GridPane.getRowIndex(node);
+                Integer c = GridPane.getColumnIndex(node);
+                if (r == null) r = 0;
+                if (c == null) c = 0;
+                if (r == row && c == col) return (TextField) node;
+            }
         }
         return null;
     }
 
     @Override
     public boolean isBoardComplete() {
+        // Primero verificar que no hay celdas vacías
+        for (int row = 0; row < 6; row++) {
+            for (int col = 0; col < 6; col++) {
+                if (board.getBoard().get(row).get(col) == 0) {
+                    return false;
+                }
+            }
+        }
+
+        // Luego verificar que el tablero completo es válido
+        return isValidCompleteBoard();
+    }
+
+    // Validar tablero completo
+    private boolean isValidCompleteBoard() {
         for (int row = 0; row < 6; row++) {
             for (int col = 0; col < 6; col++) {
                 int num = board.getBoard().get(row).get(col);
-                if (num == 0) return false;
 
                 // Validar fila
                 for (int c = 0; c < 6; c++) {
@@ -137,15 +143,14 @@ public class Game extends GameAbstract {
 
     public class SuggestionEngine {
         public int[] getSafeSuggestion() {
-            // Buscar celdas vacías y encontrar una con solución posible
+            // Buscar celdas vacías y encontrar la solución correcta
             for (int r = 0; r < 6; r++) {
                 for (int c = 0; c < 6; c++) {
                     if (board.getBoard().get(r).get(c) == 0) {
-                        List<Integer> options = getPossibleNumbers(r, c);
-                        if (!options.isEmpty()) {
-                            // Elegir un número aleatorio de las opciones posibles
-                            int randomIndex = (int) (Math.random() * options.size());
-                            return new int[]{r, c, options.get(randomIndex)};
+                        // Obtener sugerencia de la solución real
+                        int suggestion = board.getSuggestion(r, c);
+                        if (suggestion != 0) {
+                            return new int[]{r, c, suggestion};
                         }
                     }
                 }
@@ -177,6 +182,8 @@ public class Game extends GameAbstract {
             if (txt != null) {
                 txt.setText(String.valueOf(num));
                 txt.setStyle("-fx-text-fill: #2980b9; -fx-font-weight: bold; -fx-background-color: #d6eaf8;");
+                txt.setEditable(false); // Hacer la celda no editable después de la ayuda
+                board.lockCell(r, c); // Bloquear la celda
             }
             return true;
         }
