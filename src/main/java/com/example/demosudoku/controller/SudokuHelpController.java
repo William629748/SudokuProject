@@ -10,8 +10,21 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+/**
+ * Controller for the help/rules screen of the Sudoku game.
+ * This controller manages navigation from the help screen back to the main menu.
+ *
+ * @author Juan Marmolejo  William May
+ * @version 1.0
+ */
 public class SudokuHelpController {
 
+    /**
+     * Handles the mouse click event on the menu button.
+     * Navigates back to the welcome screen when the user clicks the menu icon.
+     *
+     * @param event the mouse event triggered by clicking the menu button
+     */
     @FXML
     private void handleMenuClicked(MouseEvent event) {
         try {
