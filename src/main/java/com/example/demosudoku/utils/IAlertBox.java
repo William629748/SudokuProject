@@ -4,8 +4,12 @@ import javafx.scene.control.Alert;
 
 /**
  * Defines the contract for an alert box utility.
+ *
+ * @author Juan Marmolejo  William May
+ * @version 1.0
  */
 public interface IAlertBox {
+
     /**
      * Displays an alert dialog to the user.
      *

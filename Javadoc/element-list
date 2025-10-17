@@ -1,0 +1,8 @@
+module:com.example.demosudoku
+com.example.demosudoku
+com.example.demosudoku.controller
+com.example.demosudoku.model.board
+com.example.demosudoku.model.game
+com.example.demosudoku.model.user
+com.example.demosudoku.utils
+com.example.demosudoku.view
