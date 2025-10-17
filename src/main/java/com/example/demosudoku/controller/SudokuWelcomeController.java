@@ -6,10 +6,15 @@ import com.example.demosudoku.view.SudokuGameStage;
 import com.example.demosudoku.view.SudokuWelcomeStage;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.image.ImageView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 
@@ -48,6 +53,23 @@ public class SudokuWelcomeController {
             SudokuWelcomeStage.deleteInstance();
         } else {
             new AlertBox().showAlert("Error", "Ingresa un nickname", Alert.AlertType.ERROR);
+        }
+    }
+
+    @FXML
+    private void handleRulesClicked(MouseEvent event) {
+        try {
+            // Carga el FXML desde resources
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/demosudoku/sudoku-help-view.fxml"));
+            Parent root = loader.load();
+
+            // Obtiene el stage actual desde la imagen clickeada
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

@@ -1,12 +1,10 @@
 package com.example.demosudoku.model.game;
 
-/**
- * Defines the contract for a game class. Any class that implements
- * this interface must provide a method to start the game.
- */
+import javafx.scene.control.TextField;
+
 public interface IGame {
-    /**
-     * Initializes and starts the game logic.
-     */
     void startGame();
+    TextField getTextFieldAt(int row, int col);
+    Game.SuggestionEngine getSuggestionEngine();
+    boolean isBoardComplete();
 }
